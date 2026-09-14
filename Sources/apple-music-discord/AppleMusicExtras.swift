@@ -19,7 +19,7 @@ final class AppleMusicExtrasResolver {
   /// The outcome of one track's catalog link, with when it was reached, so a
   /// miss is cached and a failure backs off.
   private struct Entry {
-    enum Outcome { case found(String), missing, failed }
+    enum Outcome { case found(AppleCatalogLink.Match), missing, failed }
     var outcome: Outcome
     var at: Date
     var attempts: Int
@@ -59,15 +59,15 @@ final class AppleMusicExtrasResolver {
   private func resolve(identity: String, query: AppleCatalogLink.Query) async -> AppleMusicTrackExtras {
     if links.count > Self.cacheLimit { links.removeAll() }
     let now = Date()
-    let externalURL = await resolveLink(identity: identity, query: query, now: now)
-    return AppleMusicTrackExtras(artworkURL: nil, externalURL: externalURL)
+    let match = await resolveLink(identity: identity, query: query, now: now)
+    return AppleMusicTrackExtras(artworkURL: match?.artworkURL, externalURL: match?.songURL)
   }
 
-  private func resolveLink(identity: String, query: AppleCatalogLink.Query, now: Date) async -> String? {
+  private func resolveLink(identity: String, query: AppleCatalogLink.Query, now: Date) async -> AppleCatalogLink.Match? {
     guard let storefront = configuration.storefront else { return nil }
     if let entry = links[identity] {
       switch entry.outcome {
-      case .found(let url): return url
+      case .found(let match): return match
       case .missing: return nil
       case .failed:
         guard now.timeIntervalSince(entry.at) >= Self.failureBackoff else { return nil }
@@ -82,9 +82,9 @@ final class AppleMusicExtrasResolver {
       let (body, response) = try await session.data(for: request)
       guard let http = response as? HTTPURLResponse else { throw CatalogError.invalidResponse }
       guard (200..<300).contains(http.statusCode) else { throw CatalogError.rejected(http.statusCode) }
-      if let page = AppleCatalogLink.songPage(for: query, in: body) {
-        links[identity] = Entry(outcome: .found(page), at: now, attempts: attempts)
-        return page
+      if let match = AppleCatalogLink.songMatch(for: query, in: body) {
+        links[identity] = Entry(outcome: .found(match), at: now, attempts: attempts)
+        return match
       }
       // The catalog has no exact counterpart; a near miss is not linked.
       links[identity] = Entry(outcome: .missing, at: now, attempts: attempts)

@@ -112,7 +112,7 @@ public struct AppleMusicSnapshot: Codable, Equatable, Sendable {
     positionMs = observation.positionMs
     durationMs = observation.durationMs
     observedAt = observation.observedAt
-    artworkURL = nil
+    artworkURL = extras.artworkURL
     externalURL = extras.externalURL
   }
 }

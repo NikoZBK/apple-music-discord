@@ -28,8 +28,8 @@ public struct DiscordPresenceActivity: Codable, Equatable, Sendable {
       timestamps = nil
     }
 
-    if let largeImage, !largeImage.isEmpty {
-      assets = Assets(largeImage: largeImage, largeText: "Apple Music")
+    if let image = snapshot.artworkURL ?? largeImage, !image.isEmpty {
+      assets = Assets(largeImage: image, largeText: snapshot.album.isEmpty ? "Apple Music" : snapshot.album)
     } else {
       assets = nil
     }

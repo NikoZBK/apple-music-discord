@@ -45,6 +45,7 @@ struct AppleMusicDiscordMain {
           )
           let extras = await resolver.extras(for: value)
           log(extras.externalURL.map { "song page: \($0)" } ?? "song page: no exact catalog match")
+          log(extras.artworkURL.map { "album art: \($0)" } ?? "album art: no exact catalog match")
         }
         return
       }
@@ -63,6 +64,7 @@ struct AppleMusicDiscordMain {
       var lastState: MusicPlaybackState?
       var lastPosition: Int?
       var lastExternalURL: String?
+      var lastArtworkURL: String?
       var lastPublishedAt = Date.distantPast
       var lastObserverErrorAt = Date.distantPast
       var lastDiscordErrorAt = Date.distantPast
@@ -81,12 +83,14 @@ struct AppleMusicDiscordMain {
               || observation.state != lastState
               || seeked
               || extras.externalURL != lastExternalURL
+              || extras.artworkURL != lastArtworkURL
               || now.timeIntervalSince(lastPublishedAt) >= 15
             if changed && (observation.state == .playing || discord.active) {
               do {
                 try discord.publish(snapshot: AppleMusicSnapshot(observation, extras: extras))
                 lastPublishedAt = now
                 lastExternalURL = extras.externalURL
+                lastArtworkURL = extras.artworkURL
                 log("published \(observation.title) — \(observation.artist)")
               } catch {
                 if now.timeIntervalSince(lastDiscordErrorAt) >= 30 {
@@ -114,6 +118,7 @@ struct AppleMusicDiscordMain {
             lastState = nil
             lastPosition = nil
             lastExternalURL = nil
+            lastArtworkURL = nil
         }
         } catch let error as ObserverError {
           if error.permissionDenied || now.timeIntervalSince(lastObserverErrorAt) >= 60 {

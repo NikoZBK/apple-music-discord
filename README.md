@@ -13,7 +13,7 @@ token, run a bot, or send playback data to a server.
 - Current song and artist
 - Elapsed and remaining time when Music reports timing
 - A strict Apple Music song-page link when the catalog match is exact
-- An optional Rich Presence image asset
+- The matched album artwork as a dynamic Rich Presence image
 - An explicit clear when playback stops
 
 The companion only clears the activity created by its own Discord application.
@@ -30,7 +30,7 @@ If Discord Desktop is closed, it reconnects when the next update is due.
 Create an application in the [Discord Developer Portal](https://discord.com/developers/applications).
 Rich Presence is sent through Discord's [local RPC interface](https://docs.discord.com/developers/topics/rpc),
 which requires the desktop client to be running. Upload an optional image in
-the application's Rich Presence assets and use its key in the environment file.
+the application's Rich Presence assets for use as a fallback image key.
 On macOS, Discord usually creates its IPC socket under `$TMPDIR`; the companion
 checks that runtime directory as well as `/tmp` automatically.
 
@@ -56,7 +56,8 @@ The default storefront comes from the Mac's locale. Override it with
 `APPLE_MUSIC_DISCORD_STOREFRONT=us`, or set
 `APPLE_MUSIC_DISCORD_LINKS=off` to skip catalog lookup. A song link is kept
 only when title, artist, album, duration, and the canonical Apple URL agree;
-near matches stay unlinked.
+near matches stay unlinked. Album artwork is used only from that same exact
+match; `APPLE_MUSIC_DISCORD_LARGE_IMAGE` is the fallback asset key.
 
 ## Run at login
 
@@ -94,10 +95,10 @@ Music or Discord to be running.
 
 ## Privacy and scope
 
-The integration is local by design. Track metadata is sent only to the local
-Discord client. The Apple catalog lookup sends title and artist to Apple's
-public search endpoint only when links are enabled. No credentials are stored
-by this program; keep the environment file mode `600`.
+The integration is local by design. Track metadata and the matched artwork URL
+are sent only to the local Discord client. The Apple catalog lookup sends title
+and artist to Apple's public search endpoint only when links are enabled. No
+credentials are stored by this program; keep the environment file mode `600`.
 
 Contributions that add another music source should keep source observation,
 normalized activity construction, and the Discord IPC transport separate. Do
