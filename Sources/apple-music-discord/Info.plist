@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>dev.apple-music-discord</string>
+  <key>CFBundleName</key>
+  <string>Apple Music Discord</string>
+  <key>NSAppleEventsUsageDescription</key>
+  <string>Apple Music Discord reads the current song and playback position from Music to publish your Discord activity.</string>
+</dict>
+</plist>
