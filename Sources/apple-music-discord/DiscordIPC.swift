@@ -66,25 +66,27 @@ final class DiscordIPCClient {
     ], options: [.sortedKeys])
 
     var lastError: Error?
-    for index in 0..<10 {
-      let descriptor = Darwin.socket(AF_UNIX, SOCK_STREAM, 0)
-      guard descriptor >= 0 else {
-        lastError = DiscordRPCError.socket(Self.systemError())
-        continue
-      }
-      do {
-        try Self.connect(descriptor, path: "/tmp/discord-ipc-\(index)")
-        socket = descriptor
-        try sendFrame(opcode: 0, payload: handshake)
-        let ready = try readFrame()
-        guard ready.opcode == 1 else {
-          throw DiscordRPCError.protocolError("Discord did not send READY")
+    for directory in Self.socketDirectories() {
+      for index in 0..<10 {
+        let descriptor = Darwin.socket(AF_UNIX, SOCK_STREAM, 0)
+        guard descriptor >= 0 else {
+          lastError = DiscordRPCError.socket(Self.systemError())
+          continue
         }
-        return
-      } catch {
-        Darwin.close(descriptor)
-        socket = -1
-        lastError = error
+        do {
+          try Self.connect(descriptor, path: "\(directory)/discord-ipc-\(index)")
+          socket = descriptor
+          try sendFrame(opcode: 0, payload: handshake)
+          let ready = try readFrame()
+          guard ready.opcode == 1 else {
+            throw DiscordRPCError.protocolError("Discord did not send READY")
+          }
+          return
+        } catch {
+          Darwin.close(descriptor)
+          socket = -1
+          lastError = error
+        }
       }
     }
     if let lastError { throw lastError }
@@ -108,6 +110,25 @@ final class DiscordIPCClient {
       }
     }
     guard result == 0 else { throw DiscordRPCError.socket(Self.systemError()) }
+  }
+
+  private static func socketDirectories() -> [String] {
+    let environment = ProcessInfo.processInfo.environment
+    var directories: [String] = []
+    for value in [
+      environment["XDG_RUNTIME_DIR"],
+      environment["TMPDIR"],
+      environment["TMP"],
+      environment["TEMP"],
+      FileManager.default.temporaryDirectory.path,
+      "/tmp",
+    ].compactMap({ $0 }) {
+      let directory = value.hasSuffix("/") ? String(value.dropLast()) : value
+      if !directory.isEmpty, !directories.contains(directory) {
+        directories.append(directory)
+      }
+    }
+    return directories
   }
 
   private func sendFrame(opcode: Int32, payload: Data) throws {

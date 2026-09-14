@@ -31,6 +31,8 @@ Create an application in the [Discord Developer Portal](https://discord.com/deve
 Rich Presence is sent through Discord's [local RPC interface](https://docs.discord.com/developers/topics/rpc),
 which requires the desktop client to be running. Upload an optional image in
 the application's Rich Presence assets and use its key in the environment file.
+On macOS, Discord usually creates its IPC socket under `$TMPDIR`; the companion
+checks that runtime directory as well as `/tmp` automatically.
 
 ## Build and run
 
